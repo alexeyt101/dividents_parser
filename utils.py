@@ -18,6 +18,13 @@ def get_html(url: str) -> str:
         return False
 
 
+def get_urls(url: str) -> tuple:
+    urls = {}
+    html = get_html(url)
+    soup = BeautifulSoup(html, 'html.parser')
+    companies = soup.find('body').find('div', class_='container')
+
+
 def parse_html(html: str) -> 'DataFrame':
     if not html:
         return False
@@ -33,10 +40,25 @@ def parse_html(html: str) -> 'DataFrame':
     
     dividents_data = pd.DataFrame(
         np.array(table_list, dtype=object), 
-        columns=['Купить до', 'Реестр', 'Дата выплаты', 'Период', 'Дивиденд', 'Доходность', 'Цена на закрытии']
+        columns=['Купить до', 'Реестр', 'Дата выплаты', 'Период', 'Дивиденд, руб', 'Доходность, %', 'Цена на закрытии, руб']
     )
     return dividents_data
 
 
-def write_dividents_data_to_excel(dividents_data: 'DataFrame', file_name: str):
-    dividents_data.to_excel(file_name)
+def write_dividents_data_to_excel(dividents_data: 'DataFrame', file_name: str, sheetname: str):
+    dividents_data.to_excel(file_name, sheetname=sheetname)
+
+
+def edit_dividents_data(dividents_data):
+    for idx in range(len(dividents_data)):
+        dividents_data['Дивиденд, руб'][idx] = dividents_data['Дивиденд, руб'][idx].replace(',', '.')
+        dividents_data['Доходность, %'][idx] = dividents_data['Доходность, %'][idx].replace(',', '.')
+        dividents_data['Цена на закрытии, руб'][idx] = dividents_data['Цена на закрытии, руб'][idx].replace(',', '.')
+        try:
+            dividents_data['Период'][idx] = int(dividents_data['Период'][idx].split()[-1])
+            dividents_data['Дивиденд, руб'][idx] = float(dividents_data['Дивиденд, руб'][idx].split()[0])
+            dividents_data['Доходность, %'][idx] = float(dividents_data['Доходность, %'][idx][:-1])
+            dividents_data['Цена на закрытии, руб'][idx] = float(dividents_data['Цена на закрытии, руб'][idx].split()[0])
+        except IndexError:
+            pass
+    return dividents_data
