@@ -18,11 +18,18 @@ def get_html(url: str) -> str:
         return False
 
 
-def get_urls(url: str) -> tuple:
-    urls = {}
+def get_companies_urls(url: str) -> tuple:
+    companies_urls = {}
     html = get_html(url)
-    soup = BeautifulSoup(html, 'html.parser')
-    companies = soup.find('body').find('div', class_='container')
+    if html:
+        soup = BeautifulSoup(html, 'html.parser')
+        companies = soup.find('body').findAll('div', class_='container')[1].findAll('tr', class_='filtered')
+        for company in companies:
+            company_name = company.find('td')['data-order']
+            company_url = company.find('a', class_='d-flex align-items-center')['href']
+            companies_urls[company_name] = company_url
+        return companies_urls
+    return False
 
 
 def parse_html(html: str) -> 'DataFrame':
@@ -45,8 +52,23 @@ def parse_html(html: str) -> 'DataFrame':
     return dividents_data
 
 
-def write_dividents_data_to_excel(dividents_data: 'DataFrame', file_name: str, sheetname: str):
-    dividents_data.to_excel(file_name, sheetname=sheetname)
+def save_result_data(writer: 'XlsxWriter object', sheet_name: str, dividents_data: 'DataFrame'):
+    '''Функция, которая сохраняет обработанные данные в exel-файл'''
+    dividents_data.to_excel(writer, sheet_name=sheet_name, startrow=1, header=False)
+    workbook = writer.book
+    worksheet = writer.sheets[sheet_name]
+    header_format = workbook.add_format({
+                                        'bold': True,
+                                        'text_wrap': True,
+                                        'valign': 'top',
+                                        'fg_color': '#D7E4BC',
+                                        'border': 1
+                                        })
+    header_format.set_align('center')
+    header_format.set_align('vcenter')
+    worksheet.set_column('A:P', 13)
+    for col_num, value in enumerate(dividents_data.columns.values):
+        worksheet.write(0, col_num + 1, value, header_format)
 
 
 def edit_dividents_data(dividents_data):
@@ -59,6 +81,6 @@ def edit_dividents_data(dividents_data):
             dividents_data['Дивиденд, руб'][idx] = float(dividents_data['Дивиденд, руб'][idx].split()[0])
             dividents_data['Доходность, %'][idx] = float(dividents_data['Доходность, %'][idx][:-1])
             dividents_data['Цена на закрытии, руб'][idx] = float(dividents_data['Цена на закрытии, руб'][idx].split()[0])
-        except IndexError:
+        except (IndexError, ValueError):
             pass
     return dividents_data
