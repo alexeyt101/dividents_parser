@@ -18,7 +18,8 @@ def get_html(url: str) -> str:
         return False
 
 
-def get_companies_urls(url: str) -> tuple:
+def get_companies_urls(url: str) -> dict:
+    '''Функция, которая собирает в словарь все названия предприятий и url на их странички'''
     companies_urls = {}
     html = get_html(url)
     if html:
@@ -33,6 +34,7 @@ def get_companies_urls(url: str) -> tuple:
 
 
 def parse_html(html: str) -> 'DataFrame':
+    '''Функция, которая парсит html предприятия и достает оттуда данные по дивидендам'''
     if not html:
         return False
     soup = BeautifulSoup(html, 'html.parser')
@@ -71,7 +73,8 @@ def save_result_data(writer: 'XlsxWriter object', sheet_name: str, dividents_dat
         worksheet.write(0, col_num + 1, value, header_format)
 
 
-def edit_dividents_data(dividents_data):
+def edit_dividents_data(dividents_data: 'DataFrame') -> 'DataFrame':
+    '''Функция, которая редактирует данные о дивидендах в DataFrame'''
     for idx in range(len(dividents_data)):
         dividents_data['Дивиденд, руб'][idx] = dividents_data['Дивиденд, руб'][idx].replace(',', '.')
         dividents_data['Доходность, %'][idx] = dividents_data['Доходность, %'][idx].replace(',', '.')

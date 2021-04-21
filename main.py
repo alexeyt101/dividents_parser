@@ -10,7 +10,7 @@ def main_func():
     try:
         writer = pd.ExcelWriter('test_output_file.xlsx', engine='xlsxwriter')
     except PermissionError:
-        print('Закрой файл результатов')
+        print('Закройте файл результатов')
     for company_name, url in companies_urls.items():
         if count > 2: # Ограничение по количеству запросов (потом убрать)
             break
